@@ -1,0 +1,8 @@
+pyautogen
+openai
+google-genai
+groq
+transformers
+torch
+python-dotenv
+autogen-ext[openai]
