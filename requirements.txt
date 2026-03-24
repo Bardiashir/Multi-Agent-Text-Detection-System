@@ -6,3 +6,4 @@ transformers
 torch
 python-dotenv
 autogen-ext[openai]
+datasets
