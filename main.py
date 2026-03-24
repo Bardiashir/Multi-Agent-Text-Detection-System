@@ -7,6 +7,7 @@ from autogen_agentchat.conditions import TextMentionTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_core.tools import FunctionTool
 from agents import evaluator_a, evaluator_b, evaluator_c, report_generator
+from data import load_sample
 
 load_dotenv()
 
@@ -31,18 +32,25 @@ async def main(text: str):
         "Now call your tool and generate the final report. End with TERMINATE."
     )
     agent_report_generator = AssistantAgent(model_client=model_client, name="ReportGenerator", tools=[
-        tool_report_generator], system_message="You are the Report Generator. Use your tool with the 3 evaluator verdicts and generate a final verdict of HUMAN or AI. End your response with TERMINATE.")
+        tool_report_generator], system_message=("You are the Report Generator. Use your tool and generate a final verdict. You MUST end your response with exactly 'Final Verdict: HUMAN' or 'Final Verdict: AI'."))
 
     termination = TextMentionTermination("TERMINATE")
     
     result = await agent_report_generator.run(task=task)
-    return result.messages
+    last_message = result.messages[-1].content
+    if "Final Verdict: HUMAN" in last_message:
+        return 1
+    elif "Final Verdict: AI" in last_message:
+        return 0
+    else:
+        return -1 
 
-res = asyncio.run(main(
-    "I'm so sorry but i wont be able to attend the class today, since i have a court going on"))
-#####
-for message in res:
-    if message.type in ("TextMessage", "ToolCallSummaryMessage"):
-        print(f"\n{'='*50}")
-        print(f"Agent:   {message.source}")
-        print(f"Message: {message.content}")
+pred_labels = []
+samples = load_sample()
+for i , row in samples:
+    print(f"Running sample {i + 1}/20.")
+    pred = asyncio.run(main(row["text"]))
+    pred_labels.append(pred)
+
+samples["predicted_labels"] = pred_labels
+
