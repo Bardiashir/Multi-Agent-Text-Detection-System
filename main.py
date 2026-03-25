@@ -2,12 +2,13 @@ import os
 import asyncio
 from dotenv import load_dotenv
 from autogen_agentchat.agents import AssistantAgent
-from autogen_agentchat.teams import RoundRobinGroupChat
-from autogen_agentchat.conditions import TextMentionTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_core.tools import FunctionTool
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
 from agents import evaluator_a, evaluator_b, evaluator_c, report_generator
 from data import load_sample
+import pandas as pd
 
 load_dotenv()
 
@@ -29,12 +30,11 @@ async def main(text: str):
         f"Evaluator A verdict: {verdict_a}\n"
         f"Evaluator B verdict: {verdict_b}\n"
         f"Evaluator C verdict: {verdict_c}\n\n"
-        "Now call your tool and generate the final report. End with TERMINATE."
+        "Now call your tool and generate the final report."
     )
     agent_report_generator = AssistantAgent(model_client=model_client, name="ReportGenerator", tools=[
         tool_report_generator], system_message=("You are the Report Generator. Use your tool and generate a final verdict. You MUST end your response with exactly 'Final Verdict: HUMAN' or 'Final Verdict: AI'."))
 
-    termination = TextMentionTermination("TERMINATE")
     
     result = await agent_report_generator.run(task=task)
     last_message = result.messages[-1].content
@@ -47,10 +47,19 @@ async def main(text: str):
 
 pred_labels = []
 samples = load_sample()
-for i , row in samples:
+for i , row in samples.iterrows():
     print(f"Running sample {i + 1}/20.")
     pred = asyncio.run(main(row["text"]))
     pred_labels.append(pred)
 
 samples["predicted_labels"] = pred_labels
 
+valid = samples[samples["predicted_labels"] != -1]
+accuracy = accuracy_score(valid["label"] ,valid["predicted_labels"])
+print(f"Accuracy is {accuracy *100 :.2f}%")
+print(classification_report(valid["label"], valid["predicted_labels"], target_names=["AI", "HUMAN"]))
+
+
+pd.set_option('display.max_colwidth', 60)
+print("\n===== FULL RESULTS =====")
+print(samples[["text", "label", "predicted_labels"]].to_string())

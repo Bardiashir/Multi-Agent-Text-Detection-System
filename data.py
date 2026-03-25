@@ -10,5 +10,3 @@ def load_sample(n=20):
 #1 : human , 0 : AI
     sample = df.sample(n=n , random_state= 42).reset_index(drop=True)
     return sample
-
-print(load_sample())
