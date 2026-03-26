@@ -1,5 +1,4 @@
 from datasets import load_dataset
-import pandas as pd
 
 
 def load_sample(n=20):

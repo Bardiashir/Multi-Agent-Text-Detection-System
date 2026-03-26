@@ -1,14 +1,11 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from google import genai
-from google.genai import types
 from groq import Groq
 from perplexity import calculate_perplexity
 
 load_dotenv()
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
@@ -85,10 +82,9 @@ def report_generator(text: str, eval_a: str, eval_b: str, eval_c: str) -> str:
         temperature=0.2,
         max_tokens=500
     )
-    return response.choices[0].message.content + "\n\nTERMINATE"
+    return response.choices[0].message.content
 
 
-###
 if __name__ == "__main__":
     test_text = "The advancements in artificial intelligence have led to significant improvements in natural language processing capabilities."
 
