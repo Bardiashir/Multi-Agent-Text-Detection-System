@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from agents import evaluator_a, evaluator_b, evaluator_c, report_generator
 from data import load_sample
-import pandas as pd
+import tempfile
 import logging
 
 logging.getLogger("autogen_agentchat").setLevel(logging.WARNING)
@@ -48,17 +48,17 @@ async def main(text: str):
     else:
         return -1
 
+
 async def run_all(samples):
     pred_labels = []
     for i, row in samples.iterrows():
         print(f"Running sample {i+1}/20...")
-        pred = await main(row["text"])  
+        pred = await main(row["text"])
         pred_labels.append(pred)
     return pred_labels
 
 samples = load_sample(n=20)
-pred_labels = asyncio.run(run_all(samples))  
-
+pred_labels = asyncio.run(run_all(samples))
 
 
 samples["predicted_labels"] = pred_labels
@@ -70,6 +70,9 @@ print(classification_report(
     valid["label"], valid["predicted_labels"], target_names=["AI", "HUMAN"]))
 print(f"Valid samples: {len(valid)}/20")
 
-pd.set_option('display.max_colwidth', 60)
-print("\n===== FULL RESULTS =====")
-print(samples[["text", "label", "predicted_labels"]].to_string())
+
+with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+    temp_path = f.name
+    samples.to_csv(temp_path, index=False)
+
+os.startfile(temp_path)
