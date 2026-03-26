@@ -48,12 +48,18 @@ async def main(text: str):
     else:
         return -1
 
-pred_labels = []
-samples = load_sample()
-for i, row in samples.iterrows():
-    print(f"Running sample {i + 1}/20.")
-    pred = asyncio.run(main(row["text"]))
-    pred_labels.append(pred)
+async def run_all(samples):
+    pred_labels = []
+    for i, row in samples.iterrows():
+        print(f"Running sample {i+1}/20...")
+        pred = await main(row["text"])  
+        pred_labels.append(pred)
+    return pred_labels
+
+samples = load_sample(n=20)
+pred_labels = asyncio.run(run_all(samples))  
+
+
 
 samples["predicted_labels"] = pred_labels
 
