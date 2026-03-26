@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from agents import evaluator_a, evaluator_b, evaluator_c, report_generator
 from data import load_sample
-import tempfile
+from datetime import datetime
 import logging
 
 logging.getLogger("autogen_agentchat").setLevel(logging.WARNING)
@@ -55,6 +55,7 @@ async def run_all(samples):
         print(f"Running sample {i+1}/20...")
         pred = await main(row["text"])
         pred_labels.append(pred)
+        await asyncio.sleep(2)
     return pred_labels
 
 samples = load_sample(n=20)
@@ -71,8 +72,17 @@ print(classification_report(
 print(f"Valid samples: {len(valid)}/20")
 
 
-with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-    temp_path = f.name
-    samples.to_csv(temp_path, index=False)
 
-os.startfile(temp_path)
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+csv_path = f"samples/run_{timestamp}.csv"
+samples.to_csv(csv_path, index=False)
+
+summary_path = f"samples/run_{timestamp}_summary.txt"
+with open(summary_path, "w") as f:
+    f.write(f"Run: {timestamp}\n")
+    f.write(f"Valid samples: {len(valid)}/20\n")
+    f.write(f"Accuracy: {accuracy * 100:.2f}%\n\n")
+    f.write(classification_report(valid["label"], valid["predicted_labels"], target_names=["AI", "HUMAN"]))
+
+print(f"Results saved to {csv_path}")
