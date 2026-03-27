@@ -5,7 +5,7 @@ GROQ_MODEL_C = "llama-3.3-70b-versatile"
 
 # Sampling Settings
 SAMPLE_SIZE = 20
-RANDOM_STATE = 42  # set to None for random samples each run
+RANDOM_STATE = None  # set to None for random samples each run
 
 # Evaluator Settings
 TEMPERATURE = 0.2
