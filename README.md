@@ -18,10 +18,10 @@ Text Input
     │
     ├── Evaluator A (OpenAI GPT-4o-mini)     ─┐
     ├── Evaluator B (Groq Llama 3.1-8b)       ├─► ReportGenerator Agent (AutoGen)
-    └── Evaluator C (Groq Llama 3.3-70b)     ─┘        │
-    │                                                    │
+    └── Evaluator C (Groq Llama 3.3-70b)     ─┘         │
+    │                                                   │
     └── Perplexity Score (GPT-2) ───────────────────────┘
-                                                         │
+                                                        │
                                               Final Verdict: HUMAN or AI
 ```
 
