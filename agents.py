@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from groq import Groq
 from perplexity import calculate_perplexity
-from config import OPENAI_MODEL, GROQ_MODEL_B, GROQ_MODEL_C, TEMPERATURE, MAX_TOKEN_EVALUATORS, MAX_TOKEN_REPORT_GENERATOR
+from config import OPENAI_MODEL, GROQ_MODEL_B, GROQ_MODEL_C, TEMPERATURE, MAX_TOKEN_EVALUATORS, MAX_TOKEN_REPORT_GENERATOR, EVALUATOR_SYSTEM_PROMPT, EVALUATOR_USER_PROMPT, REPORT_GENERATOR_SYSTEM_PROMPT, REPORT_GENERATOR_USER_PROMPT
 
 load_dotenv()
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -16,11 +16,11 @@ def evaluator_a(text: str) -> str:
         messages=[
             {
                 "role": "system",
-                "content": "You are an expert at detecting AI-generated text. Analyze the given text and determine if it is AI-generated or human-written. Reply with either HUMAN or AI followed by a brief explanation."
+                "content": EVALUATOR_SYSTEM_PROMPT
             },
             {
                 "role": "user",
-                "content": f"Is this text AI generated or Human written?\n\n{text}"
+                "content": EVALUATOR_USER_PROMPT.format(text=text)
             }
         ],
         temperature=TEMPERATURE,
@@ -34,11 +34,11 @@ def evaluator_b(text: str) -> str:
         model=GROQ_MODEL_B,
         messages=[
             {
-                "role": "system", "content": "You are an expert at detecting AI-generated text. Analyze the given text and determine if it is AI-generated or human-written. Reply with either HUMAN or AI followed by a brief explanation."
+                "role": "system", "content": EVALUATOR_SYSTEM_PROMPT
             },
 
             {
-                "role": "user", "content": f"Is this text AI generated or Human written?\n\n{text}"
+                "role": "user", "content": EVALUATOR_USER_PROMPT.format(text=text)
             }
         ],
         temperature=TEMPERATURE,
@@ -52,11 +52,10 @@ def evaluator_c(text: str) -> str:
         model=GROQ_MODEL_C,
         messages=[
             {
-                "role": "system", "content": "You are an expert at detecting AI-generated text. Analyze the given text and determine if it is AI-generated or human-written. Reply with either HUMAN or AI followed by a brief explanation."
+                "role": "system", "content": EVALUATOR_SYSTEM_PROMPT
             },
-
             {
-                "role": "user", "content": f"Is this text AI generated or Human written?\n\n{text}"
+                "role": "user", "content": EVALUATOR_USER_PROMPT.format(text=text)
             }
         ],
         temperature=TEMPERATURE,
@@ -72,12 +71,17 @@ def report_generator(text: str, eval_a: str, eval_b: str, eval_c: str) -> str:
         messages=[
             {
                 "role": "system",
-                "content": "You are an expert AI text detection analyst. You will receive opinions from 3 independent AI evaluators and a perplexity score. Weigh all the evidence and output a final verdict of either HUMAN or AI, followed by a clear explanation of your reasoning."
+                "content": REPORT_GENERATOR_SYSTEM_PROMPT
             },
             {
                 "role": "user",
 
-                "content": f"Based on the following evidence, what is your final verdict?\n\nEvaluator A (OpenAI): {eval_a}\n\nEvaluator B (Groq/Gemma): {eval_b}\n\nEvaluator C (Groq/Llama): {eval_c}\n\nPerplexity Score: {perp_score} (low score = likely AI, high score = likely Human)\n\nProvide your final verdict and explanation."
+                "content": REPORT_GENERATOR_USER_PROMPT.format(
+                    eval_a=eval_a,
+                    eval_b=eval_b,
+                    eval_c=eval_c,
+                    perp_score=perp_score
+                )
             }
         ],
         temperature=TEMPERATURE,

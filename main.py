@@ -10,7 +10,7 @@ from agents import evaluator_a, evaluator_b, evaluator_c, report_generator
 from data import load_sample
 from datetime import datetime
 import logging
-from config import OPENAI_MODEL, SAMPLE_SIZE, SLEEP_BETWEEN_SAMPLES
+from config import OPENAI_MODEL, SAMPLE_SIZE, SLEEP_BETWEEN_SAMPLES, TOOL_PROMPT, AGENT_SYSTEM_PROMPT, RESULTS_FOLDER
 
 logging.getLogger("autogen_agentchat").setLevel(logging.WARNING)
 
@@ -22,7 +22,7 @@ model_client = OpenAIChatCompletionClient(
 
 
 tool_report_generator = FunctionTool(
-    report_generator, "Takes opinions from 3 evaluators and perplexity score and generates final verdict")
+    report_generator, description=TOOL_PROMPT)
 
 
 async def main(text: str):
@@ -37,7 +37,7 @@ async def main(text: str):
         "Now call your tool and generate the final report."
     )
     agent_report_generator = AssistantAgent(model_client=model_client, name="ReportGenerator", tools=[
-        tool_report_generator], system_message=("You are the Report Generator. Use your tool and generate a final verdict. You MUST end your response with exactly 'Final Verdict: HUMAN' or 'Final Verdict: AI'."))
+        tool_report_generator], system_message=(AGENT_SYSTEM_PROMPT))
 
     result = await agent_report_generator.run(task=task)
     last_message = result.messages[-1].content
@@ -75,13 +75,13 @@ print(f"Valid samples: {len(valid)}/{SAMPLE_SIZE}")
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-csv_path = f"samples/run_{timestamp}.csv"
+csv_path = f"{RESULTS_FOLDER}/run_{timestamp}.csv"
 samples.to_csv(csv_path, index=False)
 
-summary_path = f"samples/run_{timestamp}_summary.txt"
+summary_path = f"{RESULTS_FOLDER}/run_{timestamp}_summary.txt"
 with open(summary_path, "w") as f:
     f.write(f"Run: {timestamp}\n")
-    f.write(f"Valid samples: {len(valid)}/20\n")
+    f.write(f"Valid samples: {len(valid)}/{SAMPLE_SIZE}\n")
     f.write(f"Accuracy: {accuracy * 100:.2f}%\n\n")
     f.write(classification_report(
         valid["label"], valid["predicted_labels"], target_names=["AI", "HUMAN"]))
