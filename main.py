@@ -10,6 +10,7 @@ from agents import evaluator_a, evaluator_b, evaluator_c, report_generator
 from data import load_sample
 from datetime import datetime
 import logging
+from config import OPENAI_MODEL, SAMPLE_SIZE, SLEEP_BETWEEN_SAMPLES
 
 logging.getLogger("autogen_agentchat").setLevel(logging.WARNING)
 
@@ -17,7 +18,7 @@ load_dotenv()
 
 
 model_client = OpenAIChatCompletionClient(
-    api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini")
+    api_key=os.getenv("OPENAI_API_KEY"), model=OPENAI_MODEL)
 
 
 tool_report_generator = FunctionTool(
@@ -52,13 +53,13 @@ async def main(text: str):
 async def run_all(samples):
     pred_labels = []
     for i, row in samples.iterrows():
-        print(f"Running sample {i+1}/20...")
+        print(f"Running sample {i+1}/{SAMPLE_SIZE}...")
         pred = await main(row["text"])
         pred_labels.append(pred)
-        await asyncio.sleep(2)
+        await asyncio.sleep(SLEEP_BETWEEN_SAMPLES)
     return pred_labels
 
-samples = load_sample(n=20)
+samples = load_sample(n=SAMPLE_SIZE)
 pred_labels = asyncio.run(run_all(samples))
 
 
@@ -69,8 +70,7 @@ accuracy = accuracy_score(valid["label"], valid["predicted_labels"])
 print(f"Accuracy is {accuracy * 100:.2f}%")
 print(classification_report(
     valid["label"], valid["predicted_labels"], target_names=["AI", "HUMAN"]))
-print(f"Valid samples: {len(valid)}/20")
-
+print(f"Valid samples: {len(valid)}/{SAMPLE_SIZE}")
 
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -83,6 +83,7 @@ with open(summary_path, "w") as f:
     f.write(f"Run: {timestamp}\n")
     f.write(f"Valid samples: {len(valid)}/20\n")
     f.write(f"Accuracy: {accuracy * 100:.2f}%\n\n")
-    f.write(classification_report(valid["label"], valid["predicted_labels"], target_names=["AI", "HUMAN"]))
+    f.write(classification_report(
+        valid["label"], valid["predicted_labels"], target_names=["AI", "HUMAN"]))
 
 print(f"Results saved to {csv_path}")
