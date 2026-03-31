@@ -29,6 +29,17 @@ Text Input
 
 ---
 
+## How It Works
+
+1. **Data Loading** — `data.py` loads the MAGE test split and samples N random rows with true labels
+2. **Parallel Evaluation** — All 3 LLMs evaluate the text simultaneously using `asyncio.gather()`, reducing per-sample evaluation time by ~3x
+3. **Perplexity Scoring** — GPT-2 perplexity is calculated as a soft quantitative signal
+4. **Report Generation** — The AutoGen `ReportGenerator` agent synthesizes all 3 verdicts + perplexity score into a final verdict
+5. **Verdict Extraction** — The final agent message is parsed for `Final Verdict: HUMAN` or `Final Verdict: AI`
+6. **Accuracy Evaluation** — Predicted labels are compared against true MAGE labels using sklearn metrics
+
+---
+
 ## What is Perplexity?
 
 Perplexity is a measure of how **surprised** a language model is when it reads a piece of text. In this project, GPT-2 is used to calculate the perplexity score for each input text.
@@ -101,7 +112,7 @@ Each run:
 - Prints accuracy and full classification report
 - Saves timestamped results to `samples/run_YYYYMMDD_HHMMSS.csv`
 - Saves summary to `samples/run_YYYYMMDD_HHMMSS_summary.txt`
-
+- Prints total runtime at the end
 ---
 
 ## Configuration
