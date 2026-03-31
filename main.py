@@ -26,9 +26,11 @@ tool_report_generator = FunctionTool(
 
 
 async def main(text: str):
-    verdict_a = evaluator_a(text)
-    verdict_b = evaluator_b(text)
-    verdict_c = evaluator_c(text)
+    verdict_a, verdict_b, verdict_c = await asyncio.gather(
+        asyncio.to_thread(evaluator_a, text),
+        asyncio.to_thread(evaluator_b, text),
+        asyncio.to_thread(evaluator_c, text),
+    )
     task = (
         f"Original text: {text}\n\n"
         f"Evaluator A verdict: {verdict_a}\n"
@@ -58,7 +60,7 @@ async def run_all(samples):
         pred_labels.append(pred)
         await asyncio.sleep(SLEEP_BETWEEN_SAMPLES)
     return pred_labels
-
+start_time = datetime.now()
 samples = load_sample(n=SAMPLE_SIZE)
 pred_labels = asyncio.run(run_all(samples))
 
@@ -87,3 +89,6 @@ with open(summary_path, "w") as f:
         valid["label"], valid["predicted_labels"], target_names=["AI", "HUMAN"]))
 
 print(f"Results saved to {csv_path}")
+end_time = datetime.now()
+elapsed = end_time - start_time
+print(f"Total runtime: {elapsed.seconds // 60}m {elapsed.seconds % 60}s")
